@@ -1,0 +1,81 @@
+gtest-1.7.0-mbs/makeだけに発見: gtest_main.a
+gtest-1.7.0-mbs/makeだけに発見: gtest_main.o
+gtest-1.7.0-mbs/makeだけに発見: gtest-all.o
+gtest-1.7.0-mbs/makeだけに発見: sample1.o
+gtest-1.7.0-mbs/makeだけに発見: sample1_unittest.exe
+gtest-1.7.0-mbs/makeだけに発見: sample1_unittest.o
+diff -ur gtest-1.7.0-org/src/gtest.cc gtest-1.7.0-mbs/src/gtest.cc
+--- gtest-1.7.0-org/src/gtest.cc	2013-09-18 10:48:32.000000000 +0900
++++ gtest-1.7.0-mbs/src/gtest.cc	2014-01-07 22:28:45.690960200 +0900
+@@ -1520,6 +1520,27 @@
+   return StringStreamToString(&stream);
+ }
+ 
++std::string MultiByteStringToUtf8(const char* str, int num_chars) {
++  if (num_chars == -1)
++    num_chars = static_cast<int>(strlen(str));
++
++  ::std::stringstream stream;
++  for (int i = 0; i < num_chars; ++i) {
++    wchar_t wc=0;
++    int len = mbtowc(&wc, str+i, MB_CUR_MAX);
++    if( len > 1 )
++    {
++      stream << WideStringToUtf8(&wc, 1);
++      i += len-1;
++    }
++    else
++    {
++      stream << str[i];
++    }
++  }
++  return StringStreamToString(&stream);
++}
++
+ // Converts a wide C string to an std::string using the UTF-8 encoding.
+ // NULL will be converted to "(null)".
+ std::string String::ShowWideCString(const wchar_t * wide_c_str) {
+@@ -3024,7 +3045,7 @@
+ 
+   // May c appear in a well-formed XML document?
+   static bool IsValidXmlCharacter(char c) {
+-    return IsNormalizableWhitespace(c) || c >= 0x20;
++    return IsNormalizableWhitespace(c) || c >= 0x20 || c < 0x00;
+   }
+ 
+   // Returns an XML-escaped copy of the input string str.  If
+@@ -3137,9 +3158,11 @@
+ // TODO(wan): It might be nice to have a minimally invasive, human-readable
+ // escaping scheme for invalid characters, rather than dropping them.
+ std::string XmlUnitTestResultPrinter::EscapeXml(
+-    const std::string& str, bool is_attribute) {
++    const std::string& str_in, bool is_attribute) {
+   Message m;
+ 
++  const std::string str = MultiByteStringToUtf8(str_in.c_str(), -1);
++
+   for (size_t i = 0; i < str.size(); ++i) {
+     const char ch = str[i];
+     switch (ch) {
+@@ -3318,7 +3341,8 @@
+               << EscapeXmlAttribute(summary.c_str())
+               << "\" type=\"\">";
+       const string detail = location + "\n" + part.message();
+-      OutputXmlCDataSection(stream, RemoveInvalidXmlCharacters(detail).c_str());
++      const string message = MultiByteStringToUtf8(detail.c_str(), -1);
++      OutputXmlCDataSection(stream, RemoveInvalidXmlCharacters(message).c_str());
+       *stream << "</failure>\n";
+     }
+   }
+diff -ur gtest-1.7.0-org/src/gtest-internal-inl.h gtest-1.7.0-mbs/src/gtest-internal-inl.h
+--- gtest-1.7.0-org/src/gtest-internal-inl.h	2013-09-18 10:48:30.000000000 +0900
++++ gtest-1.7.0-mbs/src/gtest-internal-inl.h	2014-01-07 22:11:26.296264400 +0900
+@@ -246,6 +246,8 @@
+ // will be encoded as individual Unicode characters from Basic Normal Plane.
+ GTEST_API_ std::string WideStringToUtf8(const wchar_t* str, int num_chars);
+ 
++GTEST_API_ std::string MultiByteStringToUtf8(const char* str, int num_chars);
++
+ // Reads the GTEST_SHARD_STATUS_FILE environment variable, and creates the file
+ // if the variable is present. If a file already exists at this location, this
+ // function will write over it. If the variable is present, but the file cannot

@@ -4,7 +4,7 @@ gtest_patch
 google test patch
 
 ---
-Google Test 1.6.0 をベースにソース改変をしたものの置き場
+Google Test 1.7.0 をベースにソース改変をしたものの置き場
 
 ---
 ・mbs
