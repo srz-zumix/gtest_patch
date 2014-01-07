@@ -1,0 +1,32 @@
+diff -ur gtest-1.7.0-org/include/gtest/internal/gtest-port.h gtest-1.7.0-ansi-fix/include/gtest/internal/gtest-port.h
+--- gtest-1.7.0-org/include/gtest/internal/gtest-port.h	2013-09-18 10:48:30.000000000 +0900
++++ gtest-1.7.0-ansi-fix/include/gtest/internal/gtest-port.h	2013-11-21 14:24:27.000000000 +0900
+@@ -193,6 +193,13 @@
+ //   Int32FromGTestEnv()  - parses an Int32 environment variable.
+ //   StringFromGTestEnv() - parses a string environment variable.
+ 
++#ifdef __STRICT_ANSI__ 
++#  undef __STRICT_ANSI__ 
++#  include <cstdio>
++#  include <string.h>
++#  include <stdlib.h>
++#  define __STRICT_ANSI__
++#endif
+ #include <ctype.h>   // for isspace, etc
+ #include <stddef.h>  // for ptrdiff_t
+ #include <stdlib.h>
+diff -ur gtest-1.7.0-org/src/gtest_main.cc gtest-1.7.0-ansi-fix/src/gtest_main.cc
+--- gtest-1.7.0-org/src/gtest_main.cc	2013-09-18 10:48:32.000000000 +0900
++++ gtest-1.7.0-ansi-fix/src/gtest_main.cc	2013-11-21 14:32:17.000000000 +0900
+@@ -27,7 +27,11 @@
+ // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
++#ifdef __STRICT_ANSI__ 
++#  undef __STRICT_ANSI__ 
+ #include <stdio.h>
++#  define __STRICT_ANSI__
++#endif
+ 
+ #include "gtest/gtest.h"
+ 
